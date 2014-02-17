@@ -31,15 +31,20 @@
 
 #define DEBUG 0
 
+typedef struct {
+    int cx, cy;
+    int major, minor;
+    float theta;
+    char align[16];
+} t_par;
+
 int nx, ny;             /* array dimensions, taken as arguments to the program */
 int h;                  /* array height per process */
-int rad;                /* radius of particles */
-int sep;                /* particle separation */
 int id;                 /* run id */
 int ba;                 /* boundary angle */
 
 /* initialisation */
-void initialise(double*** grid, int*** lock);
+void initialise(double*** grid, int*** lock, const t_par * par, int sep);
 /* local energy calculation */
 double locfunc(double **grid, int x, int y, int flag);
 /* random number generator */
@@ -47,13 +52,13 @@ float ran2(long *idum);
 /* total energy function */
 double func(double **grid, int **lock, int flag);
 /* monte carlo */
-void monte(double **grid, int **lock, int maxiter, float t0);
+void monte(double **grid, int **lock, int maxiter, float t0, FILE * fp, const char * suffix);
 /* grid printer */
 void print(double **grid, char *fname);
 /* derivative calculation - returns MINUS grad */
 void dfunc(double **fgrid, int **flock, double **dgrid);
 /* conjugate gradient function */
-void conjgrad(double **fgrid, int **flock, int maxits, double *fret);
+void conjgrad(double **fgrid, int **flock, int maxits, double *fret, FILE * fp, const char * suffix, const t_par * par, int sep);
 /* grid gatherer */
 void grid2root(double **grid, double ***fgrid);
 /* lock grid gatherer */

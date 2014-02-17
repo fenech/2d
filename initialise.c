@@ -1,8 +1,8 @@
 #include "header.h"
 
-void initialise(double*** grid, int*** lock)
+void initialise(double*** grid, int*** lock, const t_par * par, int sep)
 {
-    int i, j;                                  /* counters */
+    int i, j, k;                               /* counters */
     long idum;                                 /* random seed */
     int rank, numProcs;                        /* MPI variables */
     int r;                                     /* remainder used in grid allocation */
@@ -11,7 +11,6 @@ void initialise(double*** grid, int*** lock)
     MPI_Status stat;                           
     double particle;                           
     FILE *fp = NULL;
-    int pcy, p1cx, p2cx;
     int *hs;
     char fname[20];
     float bangle = ba * PI / 180;               /* convert ba to radians */
@@ -71,74 +70,44 @@ void initialise(double*** grid, int*** lock)
 	    (*lock)[r][i] = 1;
 	}
     if (rank == 0) {
-	sprintf(fname, "par%ds%d", rad, sep); 
+	sprintf(fname, "par%dx%d_s%d", par[0].major, par[0].minor, sep); 
 	fp = fopen(fname, "w");
     }
-    /* put two circles in the middle of the grid */
-    /* centre points of the two particles */
-    pcy = ny / 2;
-  
-    p1cx = nx / 2 - rad - sep / 2;
-    p2cx = nx / 2 + rad + sep / 2 - 1;
-  
-    for (j = pcy - rad; j <= pcy + rad; ++j) {
-	for (i = p1cx - rad; i <= p1cx + rad; ++i) {
-	    if ((i - p1cx) * (i - p1cx) + (j - pcy) * (j - pcy) < rad * rad) {
-		if (i != p1cx) {
-		    /* perpendicular surface alignment */
-		    // particle = atan((float)(j - pcy) / (i - p1cx));
-		    /* parallel surface alignment */
-		    particle = atan((float)(j - pcy) / (i - p1cx)) + PI / 2;
-		}
-		else {
-		    /* perpendicular surface alignment */
-		    // particle = PI / 2;
-		    /* parallel surface alignment */
-		    particle = 0;
-		}
-		if (j <= hs[rank] && j >= hs[rank-1]) {
-		    (*grid)[j-hs[rank-1]][i] = particle;
-		    (*lock)[j-hs[rank-1]][i] = 1;
-		}
-		if (rank == 0)
-		    fprintf(fp, "%f %f %f %f\n",
-			    (float)i - cos(particle) / 2,
-			    (float)j - sin(particle) / 2,
-			    cos(particle),
-			    sin(particle));
-	    }
-	}
     
-	for (i = p2cx - rad; i <= p2cx + rad; ++i) {
-	    if ((i - p2cx) * (i - p2cx) + (j - pcy) * (j - pcy) < rad * rad) {
-		if (i != p2cx) {
-		    /* perpendicular surface alignment */
-		    // particle = atan((float)(j - pcy) / (i - p2cx));
-		    /* parallel surface alignment */
-		    particle = atan((float)(j - pcy) / (i - p2cx)) + PI / 2;
+    for (k = 0; k < 2; ++k) {
+	for (j = par[k].cy - par[k].major; j <= par[k].cy + par[k].major; ++j) {
+	    for (i = par[k].cx - par[k].major; i <= par[k].cx + par[k].major; ++i) {
+		double a = (cos(par[k].theta) * (i - par[k].cx) + sin(par[k].theta) * (j - par[k].cy)) *
+		    (cos(par[k].theta) * (i - par[k].cx) + sin(par[k].theta) * (j - par[k].cy));
+		double b = (sin(par[k].theta) * (i - par[k].cx) - cos(par[k].theta) * (j - par[k].cy)) *
+		    (sin(par[k].theta) * (i - par[k].cx) - cos(par[k].theta) * (j - par[k].cy));
+		if (a / (par[k].major * par[k].major) + b / (par[k].minor * par[k].minor) <= 1.0) {
+		    if (i == par[k].cx) {
+			if (strcmp(par[k].align, "para") == 0) particle = 0;
+			else particle = PI / 2;
+		    }
+		    else {			
+			particle = atan((float)(j - par[k].cy) / (i - par[k].cx));			
+			if (strcmp(par[k].align, "para") == 0) particle += PI / 2;			
+		    }
+		    
+		    if (j <= hs[rank] && j >= hs[rank-1]) {
+			(*grid)[j-hs[rank-1]][i] = particle;
+			(*lock)[j-hs[rank-1]][i] = 1;
+		    }
+
+		    if (rank == 0)
+			fprintf(fp, "%f %f %f %f\n",
+				(float)i - cos(particle) / 2,
+				(float)j - sin(particle) / 2,
+				cos(particle),
+				sin(particle));
 		}
-		else {
-		    /* perpendicular surface alignment */
-		    // particle = PI / 2;
-		    /* parallel surface alignment */
-		    particle = 0;
-		}
-		if (j <= hs[rank] && j >= hs[rank-1]) {
-		    (*grid)[j-hs[rank-1]][i] = particle;
-		    (*lock)[j-hs[rank-1]][i] = 1;
-		}
-		if (rank == 0)
-		    fprintf(fp, "%f %f %f %f\n",
-			    (float)i - cos(particle) / 2,
-			    (float)j - sin(particle) / 2,
-			    cos(particle),
-			    sin(particle));
 	    }
 	}
     }
-  
-    if (rank == 0)
-	fclose(fp);
+	      
+    if (rank == 0) fclose(fp);
   
     if (rank % 2 == 1) {
 	/* odd process send downward first, then upward */
