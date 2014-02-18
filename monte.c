@@ -49,7 +49,7 @@ void monte(double **grid, int **lock, int maxiter, float t0, FILE * fp, const ch
 		    printf("gamma below 0.1 degrees\n");
 	    }
 	    e = func(grid, lock, 0);
-	    if (rank == 0 && DEBUG == 1) {
+	    if (rank == 0) {
 		fprintf(fp, "%lu %f %f %f %f\n", t, e, gamma, p, beta);
 	    }
 	}
@@ -76,11 +76,9 @@ void monte(double **grid, int **lock, int maxiter, float t0, FILE * fp, const ch
 			    if (num < p) {
 				accloc++;
 			    }
-			    else
-				grid[j][i] = angle;
+			    else grid[j][i] = angle;
 			}
-			else
-			    accloc++;
+			else accloc++;
 		    }
 		}
 	    }
