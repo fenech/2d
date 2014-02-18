@@ -10,8 +10,7 @@ int main(int argc, char **argv)
     int **flock;            /* locked cells (fullgrid) */
     char fname[128] = "log";
     char gname[128] = "grid";
-    char rname[128] = "report";
-    char dummy[128];
+    char suffix[128];
     int iter = 0;
     long maxiter;
     int flag, rank;         /* MPI variables */
@@ -19,15 +18,13 @@ int main(int argc, char **argv)
     FILE *fp, *log_fp;
     t_par par[2];
     int sep;
-    char suffix[128];
 
     MPI_Init(&argc, &argv);
     MPI_Initialized(&flag);
-    if (flag != 1)
-	MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
+    if (flag != 1) MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    if (argc < 10) {
+    if (argc < 11 || argc > 12) {
 	if (rank == 0) printf("Usage: <%s> <x length> <y length> <monte carlo steps> <temp> <major axis> <minor axis> <align> <theta> <separation> <boundary angle> [id]\n", argv[0]);
 	MPI_Finalize();
 	exit(1);
@@ -60,20 +57,15 @@ int main(int argc, char **argv)
 
     initialise(&grid, &lock, par, sep);
 
-    MPI_Finalize();
-    return 0;
+    sprintf(suffix, "r%dx%d_t%.0f_s%d_a%d_%d", par[0].major, par[0].minor, par[1].theta, sep, ba, id);
+    strcat(gname, suffix);
 
-    sprintf(dummy, "%di%.1f_%d", ny, t0, sep);    
-    print(grid, strcat(gname, dummy));
-    
-    sprintf(dummy, "%d", sep);
-    strcat(rname, dummy);
-  
-    sprintf(suffix, "r%dx%d_t%f_s%d_a%d_%d", par[0].major, par[0].minor, par[1].theta, sep, ba, id);
+    print(grid, gname);
 
     if (rank == 0) {
 	printf("Initial Frank Energy: %f\n", func(grid, lock, 0));
 	strcat(fname, suffix);
+	printf("%s\n", fname);
 	log_fp = fopen(fname, "w");
     }
 
@@ -87,11 +79,8 @@ int main(int argc, char **argv)
 
     fret = func(grid, lock, 0);
     if (rank == 0) conjgrad(fgrid, flock, 10000, &fret, log_fp, suffix, par, sep);
-
-    if (rank == 0) {
-	fp = fopen(rname, "w");
-	fprintf(fp, "%d %f\n", sep, fret);
-	fclose(fp);
+    
+    if (rank == 0) {		
 	printf("End Frank Energy:     %f\n", fret);
 	printf("No. iterations:       %d\n", iter);
 	printf("Time taken:           %f\n", end - start);
