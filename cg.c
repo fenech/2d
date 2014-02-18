@@ -270,7 +270,7 @@ void conjgrad(double **fgrid, int **lock, int maxits, double *fret, FILE * fp, c
 	    if (DEBUG == 1)
 		fprintf(fp, "#_________________\n");
 
-	    if(fabs(fb - fprev) <= EPS) strike++;
+	    if (fabs(fb - fprev) <= EPS) strike++;
 	    else strike = 0;
     
 	    fprev = *fret = fb;
@@ -287,4 +287,3 @@ void conjgrad(double **fgrid, int **lock, int maxits, double *fret, FILE * fp, c
     fclose(fp);
     prn(gra, 0, ny+1, 1, nx, gname);
 }
-
