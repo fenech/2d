@@ -1,6 +1,8 @@
 final*
 grid*
 log*
+par*
+report*
 sub*
 *.o*
 *.e*
