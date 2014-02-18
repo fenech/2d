@@ -62,10 +62,10 @@ int main(int argc, char **argv)
 
     print(grid, gname);
 
+    fret = func(grid, lock, 0);
     if (rank == 0) {
-	printf("Initial Frank Energy: %f\n", func(grid, lock, 0));
+	printf("Initial Frank Energy: %f\n", fret);
 	strcat(fname, suffix);
-	printf("%s\n", fname);
 	log_fp = fopen(fname, "w");
     }
 
