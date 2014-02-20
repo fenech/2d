@@ -44,7 +44,7 @@ int id;                 /* run id */
 int ba;                 /* boundary angle */
 
 /* initialisation */
-void initialise(double*** grid, int*** lock, const t_par * par, int sep);
+int initialise(double*** grid, int*** lock, const t_par * par, int sep);
 /* local energy calculation */
 double locfunc(double **grid, int x, int y, int flag);
 /* random number generator */

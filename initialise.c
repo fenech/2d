@@ -1,8 +1,8 @@
 #include "header.h"
 
-void initialise(double*** grid, int*** lock, const t_par * par, int sep)
+int initialise(double*** grid, int*** lock, const t_par * par, int sep)
 {
-    int i, j, k;                               /* counters */
+    int i, j, k, l;                            /* counters */
     long idum;                                 /* random seed */
     int rank, numProcs;                        /* MPI variables */
     int r;                                     /* remainder used in grid allocation */
@@ -14,6 +14,7 @@ void initialise(double*** grid, int*** lock, const t_par * par, int sep)
     int *hs;
     char fname[20];
     float bangle = ba * PI / 180;               /* convert ba to radians */
+    int ret_val = 1;
 
     /*  char fname[10];*/
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -64,38 +65,54 @@ void initialise(double*** grid, int*** lock, const t_par * par, int sep)
 	r = h + 1;
 	angle = bangle;
     }
-    if (rank == 0 || rank == numProcs - 1)
+    if (rank == 0 || rank == numProcs - 1) {
 	for (i = 1; i <= nx; ++i) {
 	    (*grid)[r][i] = angle;
 	    (*lock)[r][i] = 1;
 	}
+    }
     if (rank == 0) {
 	sprintf(fname, "par%dx%d_s%d", par[0].major, par[0].minor, sep); 
 	fp = fopen(fname, "w");
     }
     
     for (k = 0; k < 2; ++k) {
-	for (j = par[k].cy - par[k].major; j <= par[k].cy + par[k].major; ++j) {
-	    for (i = par[k].cx - par[k].major; i <= par[k].cx + par[k].major; ++i) {
-		double a = (cos(par[k].theta) * (i - par[k].cx) + sin(par[k].theta) * (j - par[k].cy)) *
-		    (cos(par[k].theta) * (i - par[k].cx) + sin(par[k].theta) * (j - par[k].cy));
-		double b = (sin(par[k].theta) * (i - par[k].cx) - cos(par[k].theta) * (j - par[k].cy)) *
-		    (sin(par[k].theta) * (i - par[k].cx) - cos(par[k].theta) * (j - par[k].cy));
-		if (a / (par[k].major * par[k].major) + b / (par[k].minor * par[k].minor) <= 1.0) {
-		    if (i == par[k].cx) {
-			if (strcmp(par[k].align, "para") == 0) particle = 0;
-			else particle = PI / 2;
-		    }
-		    else {			
-			particle = atan((float)(j - par[k].cy) / (i - par[k].cx));			
-			if (strcmp(par[k].align, "para") == 0) particle += PI / 2;			
-		    }
+	t_par p = par[k];
+	double f = sqrt(p.major * p.major - p.minor * p.minor);
+	double foc[][2] = { 
+	    { p.cx + f * cos(p.theta), p.cy + f * sin(p.theta) },
+	    { p.cx - f * cos(p.theta), p.cy - f * sin(p.theta) }
+	};
+	for (j = p.cy - p.major; j <= p.cy + p.major; ++j) {
+	    for (i = p.cx - p.major; i <= p.cx + p.major; ++i) {
+		double a = (cos(p.theta) * (i - p.cx) + sin(p.theta) * (j - p.cy)) *
+		    (cos(p.theta) * (i - p.cx) + sin(p.theta) * (j - p.cy));
+		double b = (sin(p.theta) * (i - p.cx) - cos(p.theta) * (j - p.cy)) *
+		    (sin(p.theta) * (i - p.cx) - cos(p.theta) * (j - p.cy));
+		if (a / (p.major * p.major) + b / (p.minor * p.minor) <= 1.0) {
+		    double p2foc[][2] = {
+			{ foc[0][0] - i, foc[0][1] - j },
+			{ foc[1][0] - i, foc[1][1] - j }
+		    };
+		    for (l = 0; l < 2; ++l) {
+			double mag = sqrt(p2foc[l][0] * p2foc[l][0] + p2foc[l][1] * p2foc[l][1]);
+			if (mag != 0.0) {
+			    p2foc[l][0] /= mag;
+			    p2foc[l][1] /= mag;
+			}
+			else {
+			    printf("zero magnitude vector\n");
+			    ret_val = 0;
+			}
+		    }		    
+		    particle = (atan2(p2foc[0][1], p2foc[0][0]) + atan2(p2foc[1][1], p2foc[1][0])) / 2.0;
+		    if (strcmp(p.align, "para") == 0) particle += PI / 2.0;
 		    
 		    if (j <= hs[rank] && j >= hs[rank-1]) {
 			(*grid)[j-hs[rank-1]][i] = particle;
 			(*lock)[j-hs[rank-1]][i] = 1;
 		    }
-
+		    
 		    if (rank == 0)
 			fprintf(fp, "%f %f %f %f\n",
 				(float)i - cos(particle) / 2,
@@ -130,4 +147,7 @@ void initialise(double*** grid, int*** lock, const t_par * par, int sep)
 	if (rank < numProcs - 1)
 	    MPI_Send(&((*grid)[h-1][1]), 2 * nx, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD);
     }
+
+    return ret_val;
+
 }

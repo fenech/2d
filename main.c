@@ -13,7 +13,7 @@ int main(int argc, char **argv)
     char suffix[128];
     int iter = 0;
     long maxiter;
-    int flag, rank;         /* MPI variables */
+    int flag, rank, np;     /* MPI variables */
     float t0;               /* starting "temperature" */
     FILE *fp, *log_fp;
     t_par par[2];
@@ -23,6 +23,7 @@ int main(int argc, char **argv)
     MPI_Initialized(&flag);
     if (flag != 1) MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &np);
 
     if (argc < 11 || argc > 12) {
 	if (rank == 0) printf("Usage: <%s> <x length> <y length> <monte carlo steps> <temp> <major axis> <minor axis> <align> <theta> <separation> <boundary angle> [id]\n", argv[0]);
@@ -55,7 +56,13 @@ int main(int argc, char **argv)
     par[0].cx = nx / 2 - par[0].major - sep / 2;
     par[1].cx = nx / 2 + par[1].major + sep / 2 - 1;
 
-    initialise(&grid, &lock, par, sep);
+    int success = initialise(&grid, &lock, par, sep);
+    int all_succeeded;
+    MPI_Allreduce(&success, &all_succeeded, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+    if (all_succeeded != np) {
+	MPI_Finalize();
+	return 0;
+    }
 
     sprintf(suffix, "r%dx%d_t%.0f_s%d_a%d_%d", par[0].major, par[0].minor, par[1].theta, sep, ba, id);
     strcat(gname, suffix);
