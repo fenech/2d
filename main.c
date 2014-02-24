@@ -45,7 +45,7 @@ int main(int argc, char **argv)
     strcpy(par[0].align, argv[7]);
     strcpy(par[1].align, argv[7]);
     par[0].theta = 0;
-    par[1].theta = atof(argv[8]);
+    par[1].theta = PI * atof(argv[8]) / 180.0;
     sep = atoi(argv[9]);
     ba = atoi(argv[10]);
 
