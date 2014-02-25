@@ -41,10 +41,9 @@ typedef struct {
 int nx, ny;             /* array dimensions, taken as arguments to the program */
 int h;                  /* array height per process */
 int id;                 /* run id */
-int ba;                 /* boundary angle */
 
 /* initialisation */
-int initialise(double*** grid, int*** lock, const t_par * par, int sep);
+int initialise(double*** grid, int*** lock, const t_par * par, int sep, int ba);
 /* local energy calculation */
 double locfunc(double **grid, int x, int y, int flag);
 /* random number generator */

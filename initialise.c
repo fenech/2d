@@ -1,6 +1,6 @@
 #include "header.h"
 
-int initialise(double*** grid, int*** lock, const t_par * par, int sep)
+int initialise(double*** grid, int*** lock, const t_par * par, int sep, int ba)
 {
     int i, j, k, l;                            /* counters */
     long idum;                                 /* random seed */

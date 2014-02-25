@@ -17,7 +17,7 @@ int main(int argc, char **argv)
     float t0;               /* starting "temperature" */
     FILE *fp, *log_fp;
     t_par par[2];
-    int sep;
+    int sep, ba;
 
     MPI_Init(&argc, &argv);
     MPI_Initialized(&flag);
@@ -45,7 +45,7 @@ int main(int argc, char **argv)
     strcpy(par[0].align, argv[7]);
     strcpy(par[1].align, argv[7]);
     par[0].theta = 0;
-    par[1].theta = PI * atof(argv[8]) / 180.0;
+    par[1].theta = atof(argv[8]);
     sep = atoi(argv[9]);
     ba = atoi(argv[10]);
 
@@ -55,8 +55,11 @@ int main(int argc, char **argv)
     par[0].cy = par[1].cy = ny / 2;
     par[0].cx = nx / 2 - par[0].major - sep / 2;
     par[1].cx = nx / 2 + par[1].major + sep / 2 - 1;
+    
+    sprintf(suffix, "r%dx%d_t%.0f_s%d_a%d_%d", par[0].major, par[0].minor, par[1].theta, sep, ba, id);
+    par[1].theta = PI * par[1].theta / 180.0;
 
-    int success = initialise(&grid, &lock, par, sep);
+    int success = initialise(&grid, &lock, par, sep, ba);
     int all_succeeded;
     MPI_Allreduce(&success, &all_succeeded, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
     if (all_succeeded != np) {
@@ -64,15 +67,13 @@ int main(int argc, char **argv)
 	return 0;
     }
 
-    sprintf(suffix, "r%dx%d_t%.0f_s%d_a%d_%d", par[0].major, par[0].minor, par[1].theta, sep, ba, id);
     strcat(gname, suffix);
-
     print(grid, gname);
 
     fret = func(grid, lock, 0);
     if (rank == 0) {
 	printf("Initial Frank Energy: %f\n", fret);
-	strcat(fname, suffix);
+	strcat(fname, suffix);	
 	log_fp = fopen(fname, "w");
     }
 
