@@ -1,3 +1,6 @@
+#ifndef HEADER_H
+#define HEADER_H
+
 #define IM1 2147483563
 #define IM2 2147483399
 #define AM (1.0/IM1)
@@ -25,10 +28,11 @@
 #include <time.h>
 #include <string.h>
 
-#define PI 3.14159265358979323846
-#define K_1 1.0
-#define K_3 1.0
+static const double K_1 = 4.2e-12;
+static const double K_3 = 5.3e-12;
+static const double CELL_LEN = 5e-8;
 
+#define PI M_PI
 #define DEBUG 0
 
 typedef struct {
@@ -43,7 +47,7 @@ int h;                  /* array height per process */
 int id;                 /* run id */
 
 /* initialisation */
-int initialise(double*** grid, int*** lock, const t_par * par, int sep, int ba);
+int initialise(double*** grid, int*** lock, const t_par * par, int sep, int ba, const char * suffix);
 /* local energy calculation */
 double locfunc(double **grid, int x, int y, int flag);
 /* random number generator */
@@ -68,3 +72,5 @@ void prn(double **grid, int sy, int ey, int sx, int ex, char *fname);
 void prncont(double **grid, char *fname);
 /* reconstructs grid from output file */
 void file2grid(double **grid, char *gname);
+
+#endif /* HEADER_H */

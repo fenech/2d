@@ -1,6 +1,6 @@
 #include "header.h"
 
-int initialise(double*** grid, int*** lock, const t_par * par, int sep, int ba)
+int initialise(double*** grid, int*** lock, const t_par * par, int sep, int ba, const char * suffix)
 {
     int i, j, k, l;                            /* counters */
     long idum;                                 /* random seed */
@@ -12,9 +12,11 @@ int initialise(double*** grid, int*** lock, const t_par * par, int sep, int ba)
     double particle;                           
     FILE *fp = NULL;
     int *hs;
-    char fname[20];
+    char fname[128] = "par";
     float bangle = ba * PI / 180;               /* convert ba to radians */
     int ret_val = 1;
+
+    strcat(fname, suffix);
 
     /*  char fname[10];*/
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -47,13 +49,13 @@ int initialise(double*** grid, int*** lock, const t_par * par, int sep, int ba)
     *lock = imatrix(bottom, top, 1, nx);
     /* each process initialises its unique parts */
     for (j = 1; j <= h; ++j) {
-	for (i = 2; i <= nx - 1; ++i) {
+	for (i = 1; i <= nx; ++i) {
 	    (*grid)[j][i] = (ran2(&idum) * PI);
 	    (*lock)[j][i] = 0;
 	}
 	/* lock left and right edges */
-	(*grid)[j][1] = (*grid)[j][nx] = bangle;
-	(*lock)[j][1] = (*lock)[j][nx] = 1;
+	// (*grid)[j][1] = (*grid)[j][nx] = bangle;
+	// (*lock)[j][1] = (*lock)[j][nx] = 1;
     }
     /* first process initialises bottom row */
     if (rank == 0) {
@@ -72,7 +74,6 @@ int initialise(double*** grid, int*** lock, const t_par * par, int sep, int ba)
 	}
     }
     if (rank == 0) {
-	sprintf(fname, "par%dx%d_s%d", par[0].major, par[0].minor, sep); 
 	fp = fopen(fname, "w");
     }
     
@@ -101,8 +102,8 @@ int initialise(double*** grid, int*** lock, const t_par * par, int sep, int ba)
 			    p2foc[l][1] /= mag;
 			}
 			else {
-			    printf("zero magnitude vector\n");
-			    ret_val = 0;
+			    // printf("zero magnitude vector\n");
+			    // ret_val = 0;
 			}
 		    }		    
 		    particle = (atan2(p2foc[0][1], p2foc[0][0]) + atan2(p2foc[1][1], p2foc[1][0])) / 2.0;

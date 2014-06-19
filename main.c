@@ -56,10 +56,11 @@ int main(int argc, char **argv)
     par[0].cx = nx / 2 - par[0].major - sep / 2;
     par[1].cx = nx / 2 + par[1].major + sep / 2 - 1;
     
-    sprintf(suffix, "r%dx%d_t%.0f_s%d_a%d_%d", par[0].major, par[0].minor, par[1].theta, sep, ba, id);
+    sprintf(suffix, "r%dx%d_t%.0f_s%d_a%d_%d_%s", 
+	    par[0].major, par[0].minor, par[1].theta, sep, ba, id, par[0].align);
     par[1].theta = PI * par[1].theta / 180.0;
 
-    int success = initialise(&grid, &lock, par, sep, ba);
+    int success = initialise(&grid, &lock, par, sep, ba, suffix);
     int all_succeeded;
     MPI_Allreduce(&success, &all_succeeded, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
     if (all_succeeded != np) {

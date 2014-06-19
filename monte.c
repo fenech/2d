@@ -10,7 +10,8 @@ void monte(double **grid, int **lock, int maxiter, float t0, FILE * fp, const ch
     int i, j;                          /* grid coodinate */
     double angle;                      /* original angle */
     double e, e2;                      /* old and new energy */
-    float num, p = 0;                  /* random number and acceptance probability */
+    float num;      ;                  /* random number */
+    double p = 0;                      /* acceptance probability */
     int rank, numProcs;                /* processor ID and number of processes */
     int pass;                          /* 1 or 2 */
     int srow = 0, erow = 0;            /* start row and end row */
