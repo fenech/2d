@@ -27,6 +27,9 @@
 #include <math.h>
 #include <time.h>
 #include <string.h>
+#include <Random123/threefry.h>
+#define  R123_USE_U01_DOUBLE 1
+#include <Random123/u01fixedpt.h>
 
 static const double K_1 = 4.2e-12;
 static const double K_3 = 5.3e-12;
@@ -42,12 +45,15 @@ typedef struct {
     char align[16];
 } t_par;
 
+typedef threefry4x64_ctr_t random_ctr;
+typedef threefry4x64_key_t random_key;
+
 int nx, ny;             /* array dimensions, taken as arguments to the program */
 int h;                  /* array height per process */
 int id;                 /* run id */
 
 /* initialisation */
-int initialise(double*** grid, int*** lock, const t_par * par, int sep, int ba, const char * suffix);
+int initialise(double*** grid, int*** lock, const t_par * par, int sep, int ba, const char * suffix, random_key * key);
 /* local energy calculation */
 double locfunc(double **grid, int x, int y, int flag);
 /* random number generator */
@@ -55,7 +61,7 @@ float ran2(long *idum);
 /* total energy function */
 double func(double **grid, int **lock, int flag);
 /* monte carlo */
-void monte(double **grid, int **lock, int maxiter, float t0, FILE * fp, const char * suffix);
+void monte(double **grid, int **lock, int maxiter, float t0, FILE * fp, const char * suffix, random_key key);
 /* grid printer */
 void print(double **grid, char *fname);
 /* derivative calculation - returns MINUS grad */
