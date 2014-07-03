@@ -1,4 +1,9 @@
 #include "header.h"
+#include <Random123/threefry.h>
+#define  R123_USE_U01_DOUBLE 1
+#include <Random123/u01fixedpt.h>
+
+
 
 void monte(double **grid, int **lock, int maxiter, float t0, FILE * fp, const char * suffix) 
 {
@@ -26,6 +31,18 @@ void monte(double **grid, int **lock, int maxiter, float t0, FILE * fp, const ch
 
     accloc = acctot = 0;
     beta = t0;
+
+    threefry4x64_ctr_t c={{}};
+    threefry4x64_ukey_t uk={{}};
+    threefry4x64_key_t k = threefry4x64keyinit(uk);
+    
+    size_t len = strlen(fname);
+    int seed = 0;
+    for (i = 0; i < len; ++i) {
+	seed += fname[i];
+    }
+    uk.v[0] = seed;
+    uk.v[1] = rank;
 
     for (t = 1; t <= maxiter; ++t) {
 	if (t % 10000 == 0) print(grid, fname);
@@ -69,10 +86,15 @@ void monte(double **grid, int **lock, int maxiter, float t0, FILE * fp, const ch
 		    if (lock[j][i] == 0) {
 			angle = grid[j][i];
 			e = locfunc(grid, i, j, 0);
-			grid[j][i] += ((ran2(&idum)*2)-1)*gamma;
+			c.v[0] = t;
+			c.v[1] = j;
+			c.v[2] = i;
+			threefry4x64_ctr_t r = threefry4x64(c, k);
+			double ran = u01fixedpt_open_closed_64_53(r.v[0]);
+			grid[j][i] += (ran * 2.0 - 1.0) * gamma;
 			e2 = locfunc(grid, i, j, 0);
 			if (e2 - e > 0) {
-			    num = ran2(&idum);
+			    num = u01fixedpt_open_closed_64_53(r.v[1]);
 			    p = exp((e-e2)*beta);
 			    if (num < p) {
 				accloc++;
