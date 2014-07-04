@@ -35,6 +35,10 @@ static const double K_1 = 4.2e-12;
 static const double K_3 = 5.3e-12;
 static const double CELL_LEN = 5e-8;
 
+#ifndef M_PI
+# define M_PI (4.0*atan(1.0))
+#endif
+
 #define PI M_PI
 #define DEBUG 0
 
