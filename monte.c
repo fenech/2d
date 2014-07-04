@@ -67,11 +67,11 @@ void monte(double **grid, int **lock, int maxiter, float t0, FILE * fp, const ch
                     rc.v[2] = i;
                     if (lock[j][i] == 0) {
                         angle = grid[j][i];
-                        e = locfunc(grid, i, j, 0);
+                        e = locfunc(grid, i, j, 0, rank, numProcs);
                         threefry4x64_ctr_t r = threefry4x64(rc, key);
                         double ran = u01fixedpt_open_closed_64_53(r.v[0]);
                         grid[j][i] += (ran * 2.0 - 1.0) * gamma;
-                        e2 = locfunc(grid, i, j, 0);
+                        e2 = locfunc(grid, i, j, 0, rank, numProcs);
                         if (e2 - e > 0) {
                             num = u01fixedpt_open_closed_64_53(r.v[1]);
                             p = exp((e-e2)*beta);

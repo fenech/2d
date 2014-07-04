@@ -55,7 +55,7 @@ int id;                 /* run id */
 /* initialisation */
 int initialise(double*** grid, int*** lock, const t_par * par, int sep, int ba, const char * suffix, random_key * key);
 /* local energy calculation */
-double locfunc(double **grid, int x, int y, int flag);
+double locfunc(double **grid, int x, int y, int flag, int rank, int num_procs);
 /* random number generator */
 float ran2(long *idum);
 /* total energy function */
